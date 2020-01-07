@@ -3,11 +3,11 @@ package dockercompose
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 
 	"os/exec"
 )
 
+// LogLevel constants
 const (
 	LogDebug    = LogLevel("DEBUG")
 	LogInfo     = LogLevel("INFO")
@@ -20,68 +20,73 @@ const (
 	composeExecutable = "docker-compose"
 	buildCmd          = "build"
 	upCmd             = "up"
-	tagName           = "dcf"
+	tagName           = "compose-option"
 )
 
+// LogLevel type for describing level of logging
 type LogLevel string
 
+// CommanderOptions specifies the global flags for docker-compose
 type CommanderOptions struct {
-	Files             []string `dcf:"-f"`
-	ProjectName       string   `dcf:"-p"`
-	Verbose           bool     `dcf:"--verbose"`
-	LogLevel          LogLevel `dcf:"--log-level"`
-	NoAnsi            bool     `dcf:"--no-ansi"`
-	Version           bool     `dcf:"--version"`
-	Host              string   `dcf:"-H"`
-	TLS               bool     `dcf:"--tls"`
-	TLSCACert         string   `dcf:"--tlscacert"`
-	TLSCert           string   `dcf:"--tlscert"`
-	TLSKey            string   `dcf:"--tlskey"`
-	TLSVerify         bool     `dcf:"--tlsverify"`
-	SkipHostnameCheck bool     `dcf:"--skip-hostname-check"`
-	ProjectDirectory  string   `dcf:"--project-directory"`
-	Compatibility     bool     `dcf:"--compatibility"`
+	Files             []string `compose-option:"-f"`
+	ProjectName       string   `compose-option:"-p"`
+	Verbose           bool     `compose-option:"--verbose"`
+	LogLevel          LogLevel `compose-option:"--log-level"`
+	NoAnsi            bool     `compose-option:"--no-ansi"`
+	Version           bool     `compose-option:"--version"`
+	Host              string   `compose-option:"-H"`
+	TLS               bool     `compose-option:"--tls"`
+	TLSCACert         string   `compose-option:"--tlscacert"`
+	TLSCert           string   `compose-option:"--tlscert"`
+	TLSKey            string   `compose-option:"--tlskey"`
+	TLSVerify         bool     `compose-option:"--tlsverify"`
+	SkipHostnameCheck bool     `compose-option:"--skip-hostname-check"`
+	ProjectDirectory  string   `compose-option:"--project-directory"`
+	Compatibility     bool     `compose-option:"--compatibility"`
 }
 
+// Commander is used to prepare commands for docker-compose
 type Commander struct {
-	ctx     CommanderOptions
-	ctxArgs []string
+	opt     CommanderOptions
+	optArgs []string
 }
 
+// BuildOptions are used to specify options (flags) for the 'docker-compose build' command
 type BuildOptions struct {
-	Compress  bool              `dcf:"--compress"`
-	ForceRM   bool              `dcf:"--force-rm"`
-	NoCache   bool              `dcf:"--no-cache"`
-	Pull      bool              `dcf:"--pull"`
-	Memory    int               `dcf:"-m"`
-	BuildArgs map[string]string `dcf:"--build-arg"`
-	Parallel  bool              `dcf:"--parallel"`
+	Compress  bool              `compose-option:"--compress"`
+	ForceRM   bool              `compose-option:"--force-rm"`
+	NoCache   bool              `compose-option:"--no-cache"`
+	Pull      bool              `compose-option:"--pull"`
+	Memory    int               `compose-option:"-m"`
+	BuildArgs map[string]string `compose-option:"--build-arg"`
+	Parallel  bool              `compose-option:"--parallel"`
 }
 
+// UpOptions are used to specify options (flags) for the 'docker-compose up' command
 type UpOptions struct {
-	Detach               bool           `dcf:"-d"`
-	NoColor              bool           `dcf:"--no-color"`
-	QuietPull            bool           `dcf:"--quiet-pull"`
-	NoDeps               bool           `dcf:"--no-deps"`
-	ForceRecreate        bool           `dcf:"--force-recreate"`
-	AlwaysCreateDeps     bool           `dcf:"--always-recreate-deps"`
-	NoRecreate           bool           `dcf:"--no-recreate"`
-	NoBuild              bool           `dcf:"--no-build"`
-	NoStart              bool           `dcf:"--no-start"`
-	Build                bool           `dcf:"--build"`
-	AbortOnContainerExit bool           `dcf:"--abort-on-container-exit"`
-	Timeout              int            `dcf:"-t"`
-	RenewAnonVolumes     bool           `dcf:"-V"`
-	RemoveOrphans        bool           `dcf:"--remove-orphans"`
-	ExitCodeFrom         string         `dcf:"--exit-code-from"`
-	Scale                map[string]int `dcf:"--scale"`
+	Detach               bool           `compose-option:"-d"`
+	NoColor              bool           `compose-option:"--no-color"`
+	QuietPull            bool           `compose-option:"--quiet-pull"`
+	NoDeps               bool           `compose-option:"--no-deps"`
+	ForceRecreate        bool           `compose-option:"--force-recreate"`
+	AlwaysCreateDeps     bool           `compose-option:"--always-recreate-deps"`
+	NoRecreate           bool           `compose-option:"--no-recreate"`
+	NoBuild              bool           `compose-option:"--no-build"`
+	NoStart              bool           `compose-option:"--no-start"`
+	Build                bool           `compose-option:"--build"`
+	AbortOnContainerExit bool           `compose-option:"--abort-on-container-exit"`
+	Timeout              int            `compose-option:"-t"`
+	RenewAnonVolumes     bool           `compose-option:"-V"`
+	RemoveOrphans        bool           `compose-option:"--remove-orphans"`
+	ExitCodeFrom         string         `compose-option:"--exit-code-from"`
+	Scale                map[string]int `compose-option:"--scale"`
 }
 
 func taggedValueToArgs(tag string, value interface{}, ignoreZero bool) (args []string) {
 	to := reflect.TypeOf(value)
 	vo := reflect.ValueOf(value)
 
-	if ignoreZero && value == reflect.Zero(to).Interface() {
+	if !ignoreZero && vo.IsZero() {
 		return nil
 	}
 
@@ -89,12 +94,12 @@ func taggedValueToArgs(tag string, value interface{}, ignoreZero bool) (args []s
 	case reflect.Bool:
 		args = append(args, tag)
 	case reflect.Int:
-		args = append(args, tag, strconv.Itoa(value.(int)))
+		args = append(args, tag, fmt.Sprintf("%#v", vo.Int()))
 	case reflect.String:
-		args = append(args, tag, string(value.(string)))
-	case reflect.Array:
+		args = append(args, tag, fmt.Sprintf("%#v", vo.String()))
+	case reflect.Slice:
 		for i := 0; i < vo.Len(); i++ {
-			v := vo.Slice(i, i+1)
+			v := vo.Index(i).Interface()
 			args = append(args, taggedValueToArgs(tag, v, true)...)
 		}
 	case reflect.Map:
@@ -112,10 +117,15 @@ func taggedValueToArgs(tag string, value interface{}, ignoreZero bool) (args []s
 	return args
 }
 
-func optionsToArgs(ctx interface{}) (args []string) {
-	t := reflect.TypeOf(ctx)
+func optionsToArgs(opt interface{}) (args []string) {
+	if opt == nil {
+		return nil
+	}
+
+	t := reflect.TypeOf(opt)
+	vo := reflect.ValueOf(opt)
 	for i := 0; i < t.NumField(); i++ {
-		v := reflect.ValueOf(t).Field(i)
+		v := vo.Field(i)
 		f := t.Field(i)
 		vi := v.Interface()
 
@@ -130,28 +140,34 @@ func optionsToArgs(ctx interface{}) (args []string) {
 	return args
 }
 
-func (e *Commander) composeCommand(cmd string, arg ...string) *exec.Cmd {
+// Command returns a 'docker-compose <cmd>' command with the specified arguments.
+func (e *Commander) Command(cmd string, arg ...string) *exec.Cmd {
 	var args []string
-	args = append(args, e.ctxArgs...)
+	args = append(args, e.optArgs...)
+	args = append(args, cmd)
 	args = append(args, arg...)
 	return exec.Command(composeExecutable, args...)
 }
 
-func (e *Commander) composeCmdWithOptions(cmd string, opt interface{}) *exec.Cmd {
-	return e.composeCommand(cmd, optionsToArgs(opt)...)
+func (e *Commander) commandWithOptions(cmd string, opt interface{}) *exec.Cmd {
+	return e.Command(cmd, optionsToArgs(opt)...)
 }
 
+// Build returns a 'docker-compose build' command with the specified options.
 func (e *Commander) Build(opt BuildOptions) *exec.Cmd {
-	return e.composeCmdWithOptions(buildCmd, opt)
+	return e.commandWithOptions(buildCmd, opt)
 }
 
+// Up returns a 'docker-compose up' command with the specified options.
 func (e *Commander) Up(opt UpOptions) *exec.Cmd {
-	return e.composeCmdWithOptions(buildCmd, opt)
+	return e.commandWithOptions(upCmd, opt)
 }
 
-func NewExecutor(ctx CommanderOptions) *Commander {
+// NewCommander creates a new commander instance with the specified options (global flags),
+// which will be used when executing commands.
+func NewCommander(opt CommanderOptions) *Commander {
 	return &Commander{
-		ctx:     ctx,
-		ctxArgs: optionsToArgs(ctx),
+		opt:     opt,
+		optArgs: optionsToArgs(opt),
 	}
 }

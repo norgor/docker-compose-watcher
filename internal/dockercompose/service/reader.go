@@ -32,6 +32,10 @@ type Reader struct {
 	files []string
 }
 
+var osOpen = func(name string) (io.Reader, error) {
+	return os.Open(name)
+}
+
 func parseVersion(ver string) (version, error) {
 	// hacky and amazing way to do it
 	floatVer, err := strconv.ParseFloat(ver, 32)
@@ -104,7 +108,7 @@ func transformServices(compose *compose) ([]BuiltService, error) {
 func (r *Reader) Read() (map[string]BuiltService, error) {
 	services := make(map[string]BuiltService)
 	for _, file := range r.files {
-		file, err := os.Open(file)
+		file, err := osOpen(file)
 		if err != nil {
 			return nil, err
 		}
@@ -123,9 +127,9 @@ func (r *Reader) Read() (map[string]BuiltService, error) {
 }
 
 func (r *Reader) AddCompose(path string) {
-	sr.files = append(r.files, path)
+	r.files = append(r.files, path)
 }
 
-func NewServiceReader() *Reader {
+func NewReader() *Reader {
 	return &Reader{}
 }
