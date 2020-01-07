@@ -2,24 +2,24 @@ package service
 
 import (
 	"io"
-	"os"
 	"strconv"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
+// BuiltService is a Docker Compose service that is built from a Dockerfile
 type BuiltService struct {
 	Name string
 	Path string
 }
 
 type composeService struct {
-	Build interface{} `yaml:build`
+	Build interface{} `yaml:"build"`
 }
 
 type compose struct {
-	Version  string `yaml:version`
+	Version  string `yaml:"version"`
 	Services map[string]composeService
 }
 
@@ -28,12 +28,9 @@ type version struct {
 	Minor int
 }
 
+// Reader reads from the Docker Compose yaml files
 type Reader struct {
 	files []string
-}
-
-var osOpen = func(name string) (io.Reader, error) {
-	return os.Open(name)
 }
 
 func parseVersion(ver string) (version, error) {
@@ -105,6 +102,7 @@ func transformServices(compose *compose) ([]BuiltService, error) {
 	return services, nil
 }
 
+// Read reads all the services from the Docker Compose files.
 func (r *Reader) Read() (map[string]BuiltService, error) {
 	services := make(map[string]BuiltService)
 	for _, file := range r.files {
@@ -118,7 +116,7 @@ func (r *Reader) Read() (map[string]BuiltService, error) {
 		}
 		for _, v := range s {
 			if _, ok := services[v.Name]; ok {
-				return nil, errors.Errorf("service '%s' is defined multiple times")
+				return nil, errors.Errorf("service '%s' is defined multiple times", v.Name)
 			}
 			services[v.Name] = v
 		}
@@ -126,10 +124,12 @@ func (r *Reader) Read() (map[string]BuiltService, error) {
 	return services, nil
 }
 
-func (r *Reader) AddCompose(path string) {
+// Add adds a Docker Compose file for the reader to read.
+func (r *Reader) Add(path string) {
 	r.files = append(r.files, path)
 }
 
+// NewReader creates a new Reader.
 func NewReader() *Reader {
 	return &Reader{}
 }

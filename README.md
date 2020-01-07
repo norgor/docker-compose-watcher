@@ -1,0 +1,2 @@
+# About
+docker-compose-watcher is an application that automatically rebuilds and restarts Docker Compose services, based on docker-compose.yaml file(s) and the specified source directories. This, in turn, allows for rapid development of services which run in Docker.
