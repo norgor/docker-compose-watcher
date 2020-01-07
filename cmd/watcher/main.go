@@ -12,7 +12,6 @@ func main() {
 		panic(err)
 	}
 	defer provider.Close()
-	provider.AddCompose("/srv/repos/hyperbit-runner/docker-compose.yml")
 
 	for {
 		ebs := <-provider.Channel
