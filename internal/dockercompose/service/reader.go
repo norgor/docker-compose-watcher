@@ -1,19 +1,16 @@
-package serviceprovider
+package service
 
 import (
 	"io"
+	"os"
 	"strconv"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
-type Service struct {
-	Name string
-}
-
 type BuiltService struct {
-	Service
+	Name string
 	Path string
 }
 
@@ -29,6 +26,10 @@ type compose struct {
 type version struct {
 	Major int
 	Minor int
+}
+
+type Reader struct {
+	files []string
 }
 
 func parseVersion(ver string) (version, error) {
@@ -70,7 +71,7 @@ func getServiceBuildPath(service *composeService) (string, error) {
 	return "", errors.New("service.build was of invalid type")
 }
 
-func readServices(reader io.Reader) ([]BuiltService, error) {
+func readFromCompose(reader io.Reader) ([]BuiltService, error) {
 	compose := compose{}
 	decoder := yaml.NewDecoder(reader)
 	if err := decoder.Decode(&compose); err != nil {
@@ -93,9 +94,38 @@ func transformServices(compose *compose) ([]BuiltService, error) {
 			return nil, errors.Wrapf(err, "error while transforming service '%s'", serviceName)
 		}
 		services = append(services, BuiltService{
-			Service: Service{Name: serviceName},
-			Path:    path,
+			Name: serviceName,
+			Path: path,
 		})
 	}
 	return services, nil
+}
+
+func (r *Reader) Read() (map[string]BuiltService, error) {
+	services := make(map[string]BuiltService)
+	for _, file := range r.files {
+		file, err := os.Open(file)
+		if err != nil {
+			return nil, err
+		}
+		s, err := readFromCompose(file)
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range s {
+			if _, ok := services[v.Name]; ok {
+				return nil, errors.Errorf("service '%s' is defined multiple times")
+			}
+			services[v.Name] = v
+		}
+	}
+	return services, nil
+}
+
+func (r *Reader) AddCompose(path string) {
+	sr.files = append(r.files, path)
+}
+
+func NewServiceReader() *Reader {
+	return &Reader{}
 }
