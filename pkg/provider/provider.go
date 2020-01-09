@@ -1,4 +1,4 @@
-package rprovider
+package provider
 
 import (
 	"fmt"
@@ -33,7 +33,10 @@ func (l *Provider) Add(path string) error {
 	if err != nil {
 		return err
 	}
-	l.syncCh <- struct{}{}
+	select {
+	case l.syncCh <- struct{}{}:
+	default:
+	}
 	return l.watcher.Add(path)
 }
 
@@ -53,7 +56,6 @@ func (l *Provider) Channel() <-chan ReaderValueWithError {
 }
 
 func (l *Provider) run() {
-	fmt.Println("running")
 loop:
 	for {
 		select {

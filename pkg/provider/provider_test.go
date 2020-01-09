@@ -1,4 +1,4 @@
-package rprovider
+package provider
 
 import (
 	"fmt"
@@ -303,20 +303,11 @@ func TestProvider_Add(t *testing.T) {
 			r := ri.(*ReaderDouble)
 			w := wi.(*WatcherDouble)
 
-			ec := make(chan struct{})
 			l, err := New(rf, wf)
 			if err != nil {
 				t.Fatalf("New() error %v", err)
 			}
-			go func() {
-				for {
-					select {
-					case <-l.Channel():
-					case <-ec:
-						return
-					}
-				}
-			}()
+
 			for k, v := range tt.addCalls {
 				if err := l.Add(v.first); (err != nil) != tt.wantErrs[k] {
 					t.Errorf("Provider.Add() error = %v, wantErr %v", err, tt.wantErrs[k])
@@ -335,50 +326,87 @@ func TestProvider_Add(t *testing.T) {
 			if !reflect.DeepEqual(w.addCalls, wwc) {
 				t.Errorf("Watcher.Add() got %v, want %v", w.addCalls, wwc)
 			}
-			ec <- struct{}{}
 		})
 	}
 }
 
 func TestProvider(t *testing.T) {
+	type val struct {
+		readerVal  ReaderValue
+		readerErr  error
+		watcherErr error
+	}
 	tests := []struct {
 		name string
-		vals []struct {
-			readerVal  ReaderValue
-			readerErr  error
-			watcherErr error
-		}
-	}{}
+		vals []val
+	}{
+		{
+			name: "test happy",
+			vals: []val{
+				{readerVal: "foo"},
+				{readerVal: "bar"},
+				{readerVal: "baz"},
+			},
+		},
+		{
+			name: "reader error",
+			vals: []val{
+				{readerErr: fmt.Errorf("foo")},
+				{readerErr: fmt.Errorf("bar")},
+				{readerErr: fmt.Errorf("baz")},
+			},
+		},
+		{
+			name: "watcher error",
+			vals: []val{
+				{watcherErr: fmt.Errorf("foo")},
+				{watcherErr: fmt.Errorf("bar")},
+				{watcherErr: fmt.Errorf("baz")},
+			},
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var rr []ArgsReaderValueErr
+			//one empty needed because Add() will cause a sync
+			wantVals := []ReaderValueWithError{}
+			rr := []ArgsReaderValueErr{}
 			for _, v := range tt.vals {
 				rr = append(rr, ArgsReaderValueErr{
 					first:  v.readerVal,
 					second: v.readerErr,
 				})
+				var x ReaderValueWithError
+				if v.watcherErr != nil {
+					x = ReaderValueWithError{Error: v.watcherErr}
+				} else {
+					x = ReaderValueWithError{
+						Value: v.readerVal,
+						Error: v.readerErr,
+					}
+				}
+				wantVals = append(wantVals, x)
 			}
 			rf := NewReaderDoubleFactoryFunc([]ArgsErr{{nil}}, []ArgsErr{{nil}}, rr)
 			wf := NewWatcherDoubleFactoryFunc([]ArgsErr{{nil}}, []ArgsErr{{}})
-			ri, _ := rf()
 			wi, _ := wf()
-			r := ri.(*ReaderDouble)
 			w := wi.(*WatcherDouble)
 
-			ec := make(chan struct{})
 			l, err := New(rf, wf)
 			if err != nil {
 				t.Fatalf("New() error %v", err)
 			}
+			cc := make(chan struct{})
 
 			var gotVals []ReaderValueWithError
 			go func() {
 				for {
 					select {
-					case v := <-l.Channel():
+					case v, ok := <-l.Channel():
+						if !ok {
+							cc <- struct{}{}
+							return
+						}
 						gotVals = append(gotVals, v)
-					case <-ec:
-						return
 					}
 				}
 			}()
@@ -391,8 +419,12 @@ func TestProvider(t *testing.T) {
 					Err:  v.watcherErr,
 				}
 			}
+			close(w.ch)
+			<-cc
 
-			ec <- struct{}{}
+			if !reflect.DeepEqual(gotVals, wantVals) {
+				t.Errorf("Provider.Channel() Messages got %v, want %v", gotVals, wantVals)
+			}
 		})
 	}
 }

@@ -40,7 +40,7 @@ func TestReader_Read(t *testing.T) {
 		name     string
 		files    []string
 		fileOpen func(name string) (io.Reader, error)
-		want     map[string]BuiltService
+		want     map[string]LabelledService
 		wantErr  bool
 	}{
 		{
@@ -51,11 +51,14 @@ func TestReader_Read(t *testing.T) {
 					Version: "3.0",
 					Services: map[string]composeService{
 						"#1": {
-							Build: "./foo1",
+							Labels: map[string]string{
+								"name.subkey1": "foo1",
+								"name.subkey2": "foo2",
+							},
 						},
 						"#2": {
-							Build: map[string]interface{}{
-								"context": "./foo2",
+							Labels: map[string]string{
+								"name.subkey": "bar",
 							},
 						},
 					},
@@ -64,32 +67,45 @@ func TestReader_Read(t *testing.T) {
 					Version: "2.6",
 					Services: map[string]composeService{
 						"#3": {
-							Build: "./bar1",
+							Labels: map[string]string{
+								"name.subkey1": "foo1",
+								"name.subkey2": "foo2",
+							},
 						},
 						"#4": {
-							Build: map[string]interface{}{
-								"context": "./bar2",
+							Labels: map[string]string{
+								"name.subkey": "bar",
 							},
 						},
 					},
 				}),
 			}),
-			want: map[string]BuiltService{
-				"#1": BuiltService{
+			want: map[string]LabelledService{
+				"#1": LabelledService{
 					Name: "#1",
-					Path: "./foo1",
+					Labels: map[string]string{
+						"name.subkey1": "foo1",
+						"name.subkey2": "foo2",
+					},
 				},
-				"#2": BuiltService{
+				"#2": LabelledService{
 					Name: "#2",
-					Path: "./foo2",
+					Labels: map[string]string{
+						"name.subkey": "bar",
+					},
 				},
-				"#3": BuiltService{
+				"#3": LabelledService{
 					Name: "#3",
-					Path: "./bar1",
+					Labels: map[string]string{
+						"name.subkey1": "foo1",
+						"name.subkey2": "foo2",
+					},
 				},
-				"#4": BuiltService{
+				"#4": LabelledService{
 					Name: "#4",
-					Path: "./bar2",
+					Labels: map[string]string{
+						"name.subkey": "bar",
+					},
 				},
 			},
 		},
@@ -101,11 +117,14 @@ func TestReader_Read(t *testing.T) {
 					Version: "3.0",
 					Services: map[string]composeService{
 						"#1": {
-							Build: "./foo1",
+							Labels: map[string]string{
+								"name.subkey1": "foo1",
+								"name.subkey2": "foo2",
+							},
 						},
 						"#2": {
-							Build: map[string]interface{}{
-								"context": "./foo2",
+							Labels: map[string]string{
+								"name.subkey": "bar",
 							},
 						},
 					},
@@ -114,11 +133,8 @@ func TestReader_Read(t *testing.T) {
 					Version: "3.0",
 					Services: map[string]composeService{
 						"#1": {
-							Build: "./foo1",
-						},
-						"#2": {
-							Build: map[string]interface{}{
-								"context": "./foo2",
+							Labels: map[string]string{
+								"name.s1": "f1",
 							},
 						},
 					},
@@ -135,7 +151,7 @@ func TestReader_Read(t *testing.T) {
 					Version: "3.0",
 				}),
 			}),
-			want: map[string]BuiltService{},
+			want: map[string]LabelledService{},
 		},
 		{
 			name:  "unsupported version",
@@ -160,7 +176,7 @@ func TestReader_Read(t *testing.T) {
 			for _, v := range tt.files {
 				r.Add(v)
 			}
-			got, err := r.Read()
+			got, err := r.ReadLabels()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Reader.Read() error = %v, wantErr %v", err, tt.wantErr)
 				return

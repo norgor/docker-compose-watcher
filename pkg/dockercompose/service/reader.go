@@ -8,14 +8,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// BuiltService is a Docker Compose service that is built from a Dockerfile
-type BuiltService struct {
-	Name string
-	Path string
+// LabelledService is a Docker Compose service that is labelled.
+type LabelledService struct {
+	Name   string
+	Labels map[string]string
 }
 
 type composeService struct {
-	Build interface{} `yaml:"build"`
+	Labels map[string]string `yaml:"labels"`
 }
 
 type compose struct {
@@ -58,21 +58,14 @@ func validateVersion(ver string) error {
 	return nil
 }
 
-func getServiceBuildPath(service *composeService) (string, error) {
-	switch build := service.Build.(type) {
-	case string:
-		return build, nil
-	case map[interface{}]interface{}:
-		ctx, ok := build["context"].(string)
-		if !ok {
-			return "", errors.New("service.build.context was not of type string")
-		}
-		return ctx, nil
+func getServiceLabels(service *composeService) map[string]string {
+	if service.Labels == nil {
+		return make(map[string]string, 0)
 	}
-	return "", errors.New("service.build was of invalid type")
+	return service.Labels
 }
 
-func readFromCompose(reader io.Reader) ([]BuiltService, error) {
+func readFromCompose(reader io.Reader) ([]LabelledService, error) {
 	compose := compose{}
 	decoder := yaml.NewDecoder(reader)
 	if err := decoder.Decode(&compose); err != nil {
@@ -84,27 +77,20 @@ func readFromCompose(reader io.Reader) ([]BuiltService, error) {
 	return transformServices(&compose)
 }
 
-func transformServices(compose *compose) ([]BuiltService, error) {
-	var services []BuiltService
+func transformServices(compose *compose) ([]LabelledService, error) {
+	var services []LabelledService
 	for serviceName, service := range compose.Services {
-		if service.Build == nil {
-			continue
-		}
-		path, err := getServiceBuildPath(&service)
-		if err != nil {
-			return nil, errors.Wrapf(err, "error while transforming service '%s'", serviceName)
-		}
-		services = append(services, BuiltService{
-			Name: serviceName,
-			Path: path,
+		services = append(services, LabelledService{
+			Name:   serviceName,
+			Labels: getServiceLabels(&service),
 		})
 	}
 	return services, nil
 }
 
-// Read reads all the services from the Docker Compose files.
-func (r *Reader) Read() (map[string]BuiltService, error) {
-	services := make(map[string]BuiltService)
+// ReadLabels reads all the services and their labels from the Docker Compose files.
+func (r *Reader) ReadLabels() (map[string]LabelledService, error) {
+	services := make(map[string]LabelledService)
 	for _, file := range r.files {
 		file, err := osOpen(file)
 		if err != nil {

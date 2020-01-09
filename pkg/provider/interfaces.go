@@ -1,4 +1,4 @@
-package rprovider
+package provider
 
 // ReaderValue is a generic value from a reader.
 type ReaderValue interface{}
