@@ -16,15 +16,15 @@ jobs:
       - name: Build Linux x64
         run: |
           GOOS=linux GOARCH=amd64 go build ./cmd/docker-compose-watcher
-          tar -czf docker-compose-watcher_linux-x64.tar.gz
+          tar -czf docker-compose-watcher_linux-x64.tar.gz docker-compose-watcher
       - name: Build Linux ARM
         run: |
           GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
-          tar -czf docker-compose-watcher_linux-arm.tar.gz
+          tar -czf docker-compose-watcher_linux-arm.tar.gz docker-compose-watcher
       - name: Build Linux ARM64
         run: |
           GOOS=linux GOARCH=arm64 go build ./cmd/docker-compose-watcher
-          tar -czf docker-compose-watcher_linux-arm64.tar.gz
+          tar -czf docker-compose-watcher_linux-arm64.tar.gz docker-compose-watcher
       - name: Build Windows x86
         run: |
           GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
