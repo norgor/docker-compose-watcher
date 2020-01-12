@@ -14,25 +14,31 @@ jobs:
         with:
           go-version: 1.13.6
       - name: Set env vars
-        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
+        run: | 
+          echo ::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF:10})
+          echo ::set-env name=RELEASE_VERSION::$(echo test)
+      - name: Create artifacts directory
+        run: mkdir artifacts
       - name: Build Linux x64
         run: |
           GOOS=linux GOARCH=amd64 go build ./cmd/docker-compose-watcher
-          tar -czf docker-compose-watcher_${{ env.RELEASE_VERSION }}_linux-x64.tar.gz docker-compose-watcher
+          tar -czf artifacts/docker-compose-watcher_${{ env.RELEASE_VERSION }}_linux-x64.tar.gz docker-compose-watcher
       - name: Build Linux ARM
         run: |
           GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
-          tar -czf docker-compose-watcher_${{ env.RELEASE_VERSION }}__linux-arm.tar.gz docker-compose-watcher
+          tar -czf artifacts/docker-compose-watcher_${{ env.RELEASE_VERSION }}__linux-arm.tar.gz docker-compose-watcher
       - name: Build Linux ARM64
         run: |
           GOOS=linux GOARCH=arm64 go build ./cmd/docker-compose-watcher
-          tar -czf docker-compose-watcher_${{ env.RELEASE_VERSION }}__linux-arm64.tar.gz docker-compose-watcher
+          tar -czf artifacts/docker-compose-watcher_${{ env.RELEASE_VERSION }}__linux-arm64.tar.gz docker-compose-watcher
       - name: Build Windows x86
         run: |
           GOOS=windows GOARCH=386 go build ./cmd/docker-compose-watcher
-          zip -9 docker-compose-watcher_${{ env.RELEASE_VERSION }}__windows-x86 docker-compose-watcher.exe
-      - name: blah
-        run: ls
+          zip -9 artifacts/docker-compose-watcher_${{ env.RELEASE_VERSION }}__windows-x86 docker-compose-watcher.exe
+      - uses: actions/upload-artifact@v1
+        with:
+          name: build-artifacts
+          path: artifacts
   test:
     runs-on: ubuntu-latest
     steps:
