@@ -14,13 +14,23 @@ jobs:
         with:
           go-version: 1.13.6
       - name: Build Linux x64
-        run: GOOS=linux GOARCH=amd64 go build ./cmd/docker-compose-watcher
+        run: |
+          GOOS=linux GOARCH=amd64 go build ./cmd/docker-compose-watcher
+          tar -czf docker-compose-watcher_linux-x64.tar.gz
       - name: Build Linux ARM
-        run: GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
+        run: |
+          GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
+          tar -czf docker-compose-watcher_linux-arm.tar.gz
       - name: Build Linux ARM64
-        run: GOOS=linux GOARCH=arm64 go build ./cmd/docker-compose-watcher
+        run: |
+          GOOS=linux GOARCH=arm64 go build ./cmd/docker-compose-watcher
+          tar -czf docker-compose-watcher_linux-arm64.tar.gz
       - name: Build Windows x86
-        run: GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
+        run: |
+          GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
+          zip -9 docker-compose-watcher_windows-x86 docker-compose-watcher.exe
+      - name: blah
+        run: ls
   test:
     runs-on: ubuntu-latest
     steps:
