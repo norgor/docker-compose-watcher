@@ -1,0 +1,100 @@
+name: Build, Test & Release
+
+on: 
+  push:
+    branches-ignore:
+      - '!master'
+    tags:
+      - 'v*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.6
+      - name: Create artifacts directory
+        run: mkdir artifacts
+      - name: Build Linux x64
+        run: |
+          GOOS=linux GOARCH=amd64 go build ./cmd/docker-compose-watcher
+          tar -czf artifacts/linux-x64.tar.gz docker-compose-watcher
+      - name: Build Linux ARM
+        run: |
+          GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
+          tar -czf artifacts/linux-arm.tar.gz docker-compose-watcher
+      - name: Build Linux ARM64
+        run: |
+          GOOS=linux GOARCH=arm64 go build ./cmd/docker-compose-watcher
+          tar -czf artifacts/linux-arm64.tar.gz docker-compose-watcher
+      - name: Build Windows x86
+        run: |
+          GOOS=windows GOARCH=386 go build ./cmd/docker-compose-watcher
+          zip -9 artifacts/windows-x86 docker-compose-watcher.exe
+      - uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.6
+      - name: Test
+        run: go test ./...
+  release:
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: artifacts
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Linux x64 asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/linux-x64.tar.gz
+          asset_name: docker-compose-watcher_${{ github.ref }}_linux-x64.tar.gz
+          asset_content_type: application/gzip
+      - name: Upload Linux x64 asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/linux-arm.tar.gz
+          asset_name: docker-compose-watcher_${{ github.ref }}_linux-arm.tar.gz
+          asset_content_type: application/gzip
+      - name: Upload Linux x64 asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/linux-arm64.tar.gz
+          asset_name: docker-compose-watcher_${{ github.ref }}_linux-arm64.tar.gz
+          asset_content_type: application/gzip
+      - name: Upload Linux x64 asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/windows-x86.zip
+          asset_name: docker-compose-watcher_${{ github.ref }}_windows-x86.zip
+          asset_content_type: application/zip
