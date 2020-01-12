@@ -13,25 +13,24 @@ jobs:
       - uses: actions/setup-go@v1
         with:
           go-version: 1.13.6
-      - name: Read variables
-        id: vars
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      - name: Set env vars
+        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
       - name: Build Linux x64
         run: |
           GOOS=linux GOARCH=amd64 go build ./cmd/docker-compose-watcher
-          tar -czf docker-compose-watcher_${{ steps.vars.outputs.VERSION }}_linux-x64.tar.gz docker-compose-watcher
+          tar -czf docker-compose-watcher_${{ env.RELEASE_VERSION }}_linux-x64.tar.gz docker-compose-watcher
       - name: Build Linux ARM
         run: |
           GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
-          tar -czf docker-compose-watcher_${{ steps.vars.outputs.VERSION }}__linux-arm.tar.gz docker-compose-watcher
+          tar -czf docker-compose-watcher_${{ env.RELEASE_VERSION }}__linux-arm.tar.gz docker-compose-watcher
       - name: Build Linux ARM64
         run: |
           GOOS=linux GOARCH=arm64 go build ./cmd/docker-compose-watcher
-          tar -czf docker-compose-watcher_${{ steps.vars.outputs.VERSION }}__linux-arm64.tar.gz docker-compose-watcher
+          tar -czf docker-compose-watcher_${{ env.RELEASE_VERSION }}__linux-arm64.tar.gz docker-compose-watcher
       - name: Build Windows x86
         run: |
           GOOS=windows GOARCH=386 go build ./cmd/docker-compose-watcher
-          zip -9 docker-compose-watcher_${{ steps.vars.outputs.VERSION }}__windows-x86 docker-compose-watcher.exe
+          zip -9 docker-compose-watcher_${{ env.RELEASE_VERSION }}__windows-x86 docker-compose-watcher.exe
       - name: blah
         run: ls
   test:
