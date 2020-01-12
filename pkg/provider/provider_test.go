@@ -368,8 +368,8 @@ func TestProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			//one empty needed because Add() will cause a sync
-			wantVals := []ReaderValueWithError{}
-			rr := []ArgsReaderValueErr{}
+			wantVals := []ReaderValueWithError{{}}
+			rr := []ArgsReaderValueErr{{}}
 			for _, v := range tt.vals {
 				rr = append(rr, ArgsReaderValueErr{
 					first:  v.readerVal,
@@ -395,8 +395,8 @@ func TestProvider(t *testing.T) {
 			if err != nil {
 				t.Fatalf("New() error %v", err)
 			}
+			ws := make(chan struct{})
 			cc := make(chan struct{})
-
 			var gotVals []ReaderValueWithError
 			go func() {
 				for {
@@ -407,17 +407,23 @@ func TestProvider(t *testing.T) {
 							return
 						}
 						gotVals = append(gotVals, v)
+						select {
+						case ws <- struct{}{}:
+						default:
+						}
 					}
 				}
 			}()
 			if err := l.Add("foo"); err != nil {
 				t.Fatalf("Provider.Add() error %v", err)
 			}
+			<-ws
 			for _, v := range tt.vals {
 				w.ch <- WatcherMsg{
 					Path: "foo",
 					Err:  v.watcherErr,
 				}
+
 			}
 			close(w.ch)
 			<-cc
