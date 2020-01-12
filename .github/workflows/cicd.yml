@@ -2,8 +2,6 @@ name: Build, Test & Release
 
 on: 
   push:
-    branches-ignore:
-      - '!master'
     tags:
       - 'v*'
 jobs:
@@ -52,6 +50,8 @@ jobs:
       - uses: actions/download-artifact@v1
         with:
           name: artifacts
+      - name: Set env
+        run: echo ::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF:10})
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -69,7 +69,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifacts/linux-x64.tar.gz
-          asset_name: docker-compose-watcher_${{ github.ref }}_linux-x64.tar.gz
+          asset_name: docker-compose-watcher_${{ env.RELEASE_VERSION }}_linux-x64.tar.gz
           asset_content_type: application/gzip
       - name: Upload Linux x64 asset
         uses: actions/upload-release-asset@v1.0.1
@@ -78,7 +78,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifacts/linux-arm.tar.gz
-          asset_name: docker-compose-watcher_${{ github.ref }}_linux-arm.tar.gz
+          asset_name: docker-compose-watcher_${{ env.RELEASE_VERSION }}_linux-arm.tar.gz
           asset_content_type: application/gzip
       - name: Upload Linux x64 asset
         uses: actions/upload-release-asset@v1.0.1
@@ -87,7 +87,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifacts/linux-arm64.tar.gz
-          asset_name: docker-compose-watcher_${{ github.ref }}_linux-arm64.tar.gz
+          asset_name: docker-compose-watcher_${{ env.RELEASE_VERSION }}_linux-arm64.tar.gz
           asset_content_type: application/gzip
       - name: Upload Linux x64 asset
         uses: actions/upload-release-asset@v1.0.1
@@ -96,5 +96,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifacts/windows-x86.zip
-          asset_name: docker-compose-watcher_${{ github.ref }}_windows-x86.zip
+          asset_name: docker-compose-watcher_${{ env.RELEASE_VERSION }}_windows-x86.zip
           asset_content_type: application/zip
