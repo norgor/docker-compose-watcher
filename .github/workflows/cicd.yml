@@ -71,7 +71,7 @@ jobs:
           asset_path: ./artifacts/linux-x64.tar.gz
           asset_name: docker-compose-watcher_${{ env.RELEASE_VERSION }}_linux-x64.tar.gz
           asset_content_type: application/gzip
-      - name: Upload Linux x64 asset
+      - name: Upload Linux ARM asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -80,7 +80,7 @@ jobs:
           asset_path: ./artifacts/linux-arm.tar.gz
           asset_name: docker-compose-watcher_${{ env.RELEASE_VERSION }}_linux-arm.tar.gz
           asset_content_type: application/gzip
-      - name: Upload Linux x64 asset
+      - name: Upload Linux ARM64 asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -89,7 +89,7 @@ jobs:
           asset_path: ./artifacts/linux-arm64.tar.gz
           asset_name: docker-compose-watcher_${{ env.RELEASE_VERSION }}_linux-arm64.tar.gz
           asset_content_type: application/gzip
-      - name: Upload Linux x64 asset
+      - name: Upload Windows x86 asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
