@@ -1,7 +1,7 @@
 package fsnotify
 
 import (
-	"docker-compose-watcher/pkg/rlistener"
+	"docker-compose-watcher/internal/rlistener"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -49,6 +49,7 @@ func New() (rlistener.Watcher, error) {
 				}
 				c <- rlistener.WatcherMsg{
 					Path: e.Name,
+					Op:   rlistener.Operation(e.Op),
 					Err:  nil,
 				}
 			}

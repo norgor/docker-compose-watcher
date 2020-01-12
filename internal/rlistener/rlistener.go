@@ -36,6 +36,9 @@ func (l *Listener) AddDir(path string) error {
 	if err != nil {
 		return err
 	}
+	if err := l.recursiveDiscover(path); err != nil {
+		return err
+	}
 	return l.w.AddDir(path)
 }
 
@@ -47,17 +50,17 @@ func (l *Listener) Close() error {
 	return l.w.Close()
 }
 
-func pathDiff(src, dst []string) (rem []string, add []string) {
+func pathDiff(src, dst []string) (add []string, rem []string) {
 	// can be vastly improved by using binary search
 	// because the paths are in lexical order
 	for i := 0; i < len(src); i++ {
 		path := src[i]
 		for j := 0; ; j++ {
-			if path == dst[j] {
+			if j == len(dst) {
+				rem = append(rem, path)
 				break
 			}
-			if j == len(dst)-1 {
-				rem = append(rem, path)
+			if path == dst[j] {
 				break
 			}
 		}
@@ -65,11 +68,11 @@ func pathDiff(src, dst []string) (rem []string, add []string) {
 	for i := 0; i < len(dst); i++ {
 		path := dst[i]
 		for j := 0; ; j++ {
-			if path == src[j] {
+			if j == len(src) {
+				add = append(add, path)
 				break
 			}
-			if j == len(src)-1 {
-				add = append(add, path)
+			if path == src[j] {
 				break
 			}
 		}
@@ -77,14 +80,14 @@ func pathDiff(src, dst []string) (rem []string, add []string) {
 	return
 }
 
-func (l *Listener) applyDiff(add []string, rem []string) error {
+func (l *Listener) applyDiff(path string, add []string, rem []string) error {
 	for _, v := range rem {
-		if err := l.w.RemDir(v); err != nil {
+		if err := l.w.RemDir(filepath.Join(path, v)); err != nil {
 			return err
 		}
 	}
 	for _, v := range add {
-		if err := l.w.AddDir(v); err != nil {
+		if err := l.w.AddDir(filepath.Join(path, v)); err != nil {
 			return err
 		}
 	}
@@ -113,7 +116,8 @@ func (l *Listener) recursiveDiscover(path string) error {
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	src, _ := l.ld[path]
-	if err := l.applyDiff(pathDiff(src, dst)); err != nil {
+	add, rem := pathDiff(src, dst)
+	if err := l.applyDiff(path, add, rem); err != nil {
 		return err
 	}
 	l.ld[path] = dst
@@ -167,6 +171,7 @@ func New(watcherFactory WatcherFactoryFunc) (*Listener, error) {
 	l := &Listener{
 		w:  w,
 		ch: make(chan ListenerMsg),
+		ld: make(map[string][]string),
 	}
 	go l.run()
 	return l, nil
