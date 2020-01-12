@@ -24,7 +24,7 @@ jobs:
       - name: Build Linux ARM
         run: |
           GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
-          tar -czf artifacts/linux-arm.tar.gz docker-compose-watche
+          tar -czf artifacts/linux-arm.tar.gz docker-compose-watcher
       - name: Build Linux ARM64
         run: |
           GOOS=linux GOARCH=arm64 go build ./cmd/docker-compose-watcher
