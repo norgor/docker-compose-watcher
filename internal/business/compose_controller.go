@@ -9,6 +9,7 @@ import (
 	"docker-compose-watcher/pkg/dockercompose"
 	"docker-compose-watcher/pkg/provider"
 	pfsnotify "docker-compose-watcher/pkg/provider/watcher/fsnotify"
+	"github.com/pkg/errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,14 +30,14 @@ type ComposeController struct {
 func (c *ComposeController) rebuildAndRestart() error {
 	if c.exe != nil {
 		if err := c.exe.Process.Signal(os.Interrupt); err != nil {
-			return err
+			return errors.Wrap(err, "failed to send interrupt signal to process")
 		}
 	}
 	c.exe = c.cmd.Build(dockercompose.BuildOptions{})
 	c.exe.Stdout = os.Stdout
 	c.exe.Stderr = os.Stderr
 	if err := c.exe.Run(); err != nil {
-		return err
+		return errors.Wrap(err, "docker compose build failed")
 	}
 	c.exe = c.cmd.Up(dockercompose.UpOptions{})
 	c.exe.Stdout = os.Stdout
@@ -47,18 +48,19 @@ func (c *ComposeController) rebuildAndRestart() error {
 func (c *ComposeController) servicesUpdated(services map[string]translator.WatchedService) error {
 	var err error
 	if err := c.l.Close(); err != nil {
-		return err
+		return errors.Wrap(err, "failed to close previous rlistener")
 	}
 	c.l, err = rlistener.New(rfsnotify.New)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to create rlistener")
 	}
 	for _, v := range services {
 		if v.Path == "" {
 			continue
 		}
-		if err := c.l.AddDir(filepath.Join(v.Directory, v.Path)); err != nil {
-			return err
+		p := filepath.Join(v.Directory, v.Path)
+		if err := c.l.AddDir(p); err != nil {
+			return errors.Wrapf(err, "failed to listen to source dir %v", p)
 		}
 	}
 	return c.rebuildAndRestart()

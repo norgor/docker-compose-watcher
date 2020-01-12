@@ -31,14 +31,14 @@ type WatcherFactoryFunc func() (Watcher, error)
 func (l *Listener) AddDir(path string) error {
 	i, err := os.Stat(path)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "stat failed on file %s", path)
 	}
 	if !i.IsDir() {
 		return errors.New("the path did not point to a directory")
 	}
 	path, err = filepath.Abs(path)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to get absolute path of %s", path)
 	}
 	if err := l.recursiveDiscover(path); err != nil {
 		return err
@@ -89,12 +89,12 @@ func pathDiff(src, dst []string) (add []string, rem []string) {
 func (l *Listener) applyDiff(path string, add []string, rem []string) error {
 	for _, v := range rem {
 		if err := l.w.RemDir(filepath.Join(path, v)); err != nil {
-			return err
+			return errors.Wrap(err, "failed to remove dir")
 		}
 	}
 	for _, v := range add {
 		if err := l.w.AddDir(filepath.Join(path, v)); err != nil {
-			return err
+			return errors.Wrap(err, "failed to add dir")
 		}
 	}
 	return nil
@@ -111,20 +111,20 @@ func (l *Listener) recursiveDiscover(path string) error {
 		}
 		r, err := filepath.Rel(path, fpath)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to get relative path")
 		}
 		dst = append(dst, r)
 		return nil
 	})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "recursive walk discovery failed")
 	}
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	src, _ := l.ld[path]
 	add, rem := pathDiff(src, dst)
 	if err := l.applyDiff(path, add, rem); err != nil {
-		return err
+		return errors.Wrap(err, "failed to apply diff")
 	}
 	l.ld[path] = dst
 	return nil
