@@ -40,6 +40,11 @@ func (l *Provider) Add(path string) error {
 	return l.watcher.Add(path)
 }
 
+// Sync triggers a synchronization (full re-read) of the provider.
+func (l *Provider) Sync() {
+	l.syncCh <- struct{}{}
+}
+
 // Close cleans up and closes the channels.
 func (l *Provider) Close() error {
 	l.closeCh <- struct{}{}
@@ -106,7 +111,7 @@ func New(readerFactory ReaderFactoryFunc, watcherFactory WatcherFactoryFunc) (*P
 		watcher: w,
 		ch:      wc,
 		closeCh: make(chan struct{}),
-		syncCh:  make(chan struct{}),
+		syncCh:  make(chan struct{}, 1),
 	}
 	go l.run()
 	return l, nil

@@ -18,19 +18,19 @@ func TestListenerWithWatchers(t *testing.T) {
 		t.Run(k, func(tt *testing.T) {
 			want := []rlistener.ListenerMsg{
 				{
-					Path: "./0",
-					Op:   rlistener.Create,
-					Err:  nil,
+					Path:      "./0",
+					Operation: rlistener.Create,
+					Error:     nil,
 				},
 				{
-					Path: "./0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/file",
-					Op:   rlistener.Create,
-					Err:  nil,
+					Path:      "./0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/file",
+					Operation: rlistener.Create,
+					Error:     nil,
 				},
 				{
-					Path: "./0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/file",
-					Op:   rlistener.Write,
-					Err:  nil,
+					Path:      "./0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/file",
+					Operation: rlistener.Write,
+					Error:     nil,
 				},
 			}
 			l, err := rlistener.New(v)

@@ -11,15 +11,17 @@ type Watcher struct {
 	ch chan rlistener.WatcherMsg
 }
 
-// Chan returns the watcher channel.
+// Channel returns the watcher channel.
 func (w *Watcher) Channel() <-chan rlistener.WatcherMsg {
 	return w.ch
 }
 
+// AddDir starts watching a directory
 func (w *Watcher) AddDir(path string) error {
 	return w.Add(path)
 }
 
+// RemDir stops watching a directory
 func (w *Watcher) RemDir(path string) error {
 	return w.Remove(path)
 }

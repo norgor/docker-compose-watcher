@@ -2,6 +2,7 @@ package service
 
 import (
 	"io"
+	"path/filepath"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -10,8 +11,9 @@ import (
 
 // LabelledService is a Docker Compose service that is labelled.
 type LabelledService struct {
-	Name   string
-	Labels map[string]string
+	Name      string
+	Directory string
+	Labels    map[string]string
 }
 
 type composeService struct {
@@ -92,18 +94,20 @@ func transformServices(compose *compose) ([]LabelledService, error) {
 func (r *Reader) ReadLabels() (map[string]LabelledService, error) {
 	services := make(map[string]LabelledService)
 	for _, file := range r.files {
-		file, err := osOpen(file)
+		f, err := osOpen(file)
 		if err != nil {
 			return nil, err
 		}
-		s, err := readFromCompose(file)
+		s, err := readFromCompose(f)
 		if err != nil {
 			return nil, err
 		}
+		d := filepath.Dir(file)
 		for _, v := range s {
 			if _, ok := services[v.Name]; ok {
 				return nil, errors.Errorf("service '%s' is defined multiple times", v.Name)
 			}
+			v.Directory = d
 			services[v.Name] = v
 		}
 	}

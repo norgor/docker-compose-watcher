@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Listener recursively listens for changes within added directories.
 type Listener struct {
 	w   Watcher
 	ch  chan ListenerMsg
@@ -16,14 +17,17 @@ type Listener struct {
 	ld  map[string][]string
 }
 
+// ListenerMsg is a message from the listener.
 type ListenerMsg struct {
-	Path string
-	Op   Operation
-	Err  error
+	Path      string
+	Operation Operation
+	Error     error
 }
 
+// WatcherFactoryFunc is a function for creting watchers for the listener.
 type WatcherFactoryFunc func() (Watcher, error)
 
+// AddDir adds a directory to listen on.
 func (l *Listener) AddDir(path string) error {
 	i, err := os.Stat(path)
 	if err != nil {
@@ -42,10 +46,12 @@ func (l *Listener) AddDir(path string) error {
 	return l.w.AddDir(path)
 }
 
+// Channel returns the listener's channel.
 func (l *Listener) Channel() <-chan ListenerMsg {
 	return l.ch
 }
 
+// Close closes the listener.
 func (l *Listener) Close() error {
 	return l.w.Close()
 }
@@ -140,18 +146,18 @@ func (l *Listener) run() {
 			break
 		}
 		if w.Err != nil {
-			l.ch <- ListenerMsg{Err: w.Err}
+			l.ch <- ListenerMsg{Error: w.Err}
 			continue
 		}
 		ap, err := filepath.Abs(w.Path)
 		if err != nil {
-			l.ch <- ListenerMsg{Err: w.Err}
+			l.ch <- ListenerMsg{Error: w.Err}
 			continue
 		}
 		m := ListenerMsg{
-			Path: ap,
-			Op:   w.Op,
-			Err:  w.Err,
+			Path:      ap,
+			Operation: w.Op,
+			Error:     w.Err,
 		}
 		l.handleMsg(m)
 		l.ch <- m
@@ -159,6 +165,7 @@ func (l *Listener) run() {
 	close(l.ch)
 }
 
+// New creates a new rlistener
 func New(watcherFactory WatcherFactoryFunc) (*Listener, error) {
 	if watcherFactory == nil {
 		return nil, errors.New("watcherFactory cannot be nil")

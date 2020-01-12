@@ -8,15 +8,22 @@ import (
 
 const labelTag = "dcw"
 
+// WatchedService is a service that is provided by the Provider.
 type WatchedService struct {
-	Name string
-	Path string `dcw:docker-compose-watcher.path`
+	Name      string
+	Directory string
+	Path      string `dcw:"docker-compose-watcher.path"`
 }
 
 func translate(src map[string]service.LabelledService) map[string]WatchedService {
 	m := make(map[string]WatchedService, len(src))
 	for k, v := range src {
-		m[k] = *flatmapper.MapToStruct(labelTag, v.Labels, &WatchedService{}).(*WatchedService)
+		v := flatmapper.MapToStruct(labelTag, v.Labels, &WatchedService{
+			Name:      v.Name,
+			Directory: v.Directory,
+		})
+		s := *v.(*WatchedService)
+		m[k] = s
 	}
 	return m
 }
@@ -33,12 +40,13 @@ func NewServiceTranslatorChannel(src <-chan provider.ReaderValueWithError) <-cha
 			}
 			if v.Error != nil {
 				dst <- provider.ReaderValueWithError{
-					Value: nil,
 					Error: v.Error,
 				}
 				continue
 			}
-
+			dst <- provider.ReaderValueWithError{
+				Value: translate(v.Value.(map[string]service.LabelledService)),
+			}
 		}
 		close(dst)
 	}()

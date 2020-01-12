@@ -14,7 +14,6 @@ func MapToStruct(tagKey string, srcStringMap interface{}, dst interface{}) inter
 	if st.Key().Kind() != reflect.String {
 		panic("kind srcStringMap's key must be string")
 	}
-	z := reflect.Value{}
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		tag, ok := f.Tag.Lookup(tagKey)
@@ -22,10 +21,14 @@ func MapToStruct(tagKey string, srcStringMap interface{}, dst interface{}) inter
 			continue
 		}
 		va := sv.MapIndex(reflect.ValueOf(tag))
-		if va == z {
+		if !va.IsValid() {
 			continue
 		}
-		v.Field(i).Set(va.Elem())
+		// interfaces need another deference
+		if va.Kind() == reflect.Interface {
+			va = va.Elem()
+		}
+		v.Field(i).Set(va)
 	}
 	return dst
 }
