@@ -11,7 +11,7 @@ jobs:
         steps:
             - uses: actions/checkout@v1
             - name: Build
-              run: go build cmd/docker-compose-watcher
+              run: go build ./cmd/docker-compose-watcher
     test:
         runs-on: ubuntu-latest
         steps:
