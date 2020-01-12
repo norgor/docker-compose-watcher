@@ -1,28 +1,28 @@
 package fsnotify
 
 import (
-	"docker-compose-watcher/pkg/rprovider"
+	"docker-compose-watcher/pkg/provider"
 	"github.com/fsnotify/fsnotify"
 )
 
 // Watcher watcher for file changes.
 type Watcher struct {
 	*fsnotify.Watcher
-	ch chan rprovider.WatcherMsg
+	ch chan provider.WatcherMsg
 }
 
 // Chan returns the watcher channel.
-func (w *Watcher) Chan() <-chan rprovider.WatcherMsg {
+func (w *Watcher) Chan() <-chan provider.WatcherMsg {
 	return w.ch
 }
 
 // New creates a new fsnotify watcher.
-func New() (rprovider.Watcher, error) {
+func New() (provider.Watcher, error) {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
 	}
-	c := make(chan rprovider.WatcherMsg)
+	c := make(chan provider.WatcherMsg)
 	go func() {
 	loop:
 		for {
@@ -31,7 +31,7 @@ func New() (rprovider.Watcher, error) {
 				if !ok {
 					break loop
 				}
-				c <- rprovider.WatcherMsg{
+				c <- provider.WatcherMsg{
 					Path: "",
 					Err:  err,
 				}
@@ -39,7 +39,7 @@ func New() (rprovider.Watcher, error) {
 				if !ok {
 					break loop
 				}
-				c <- rprovider.WatcherMsg{
+				c <- provider.WatcherMsg{
 					Path: e.Name,
 					Err:  nil,
 				}
