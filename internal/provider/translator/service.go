@@ -3,7 +3,7 @@ package translator
 import (
 	"docker-compose-watcher/pkg/dockercompose/service"
 	"docker-compose-watcher/pkg/flatmapper"
-	"docker-compose-watcher/pkg/rprovider"
+	"docker-compose-watcher/pkg/provider"
 )
 
 const labelTag = "dcw"
@@ -23,8 +23,8 @@ func translate(src map[string]service.LabelledService) map[string]WatchedService
 
 // NewServiceTranslatorChannel creates a new channel that translates LabelledService
 // maps to WatchedService maps.
-func NewServiceTranslatorChannel(src <-chan rprovider.ReaderValueWithError) <-chan rprovider.ReaderValueWithError {
-	dst := make(chan rprovider.ReaderValueWithError)
+func NewServiceTranslatorChannel(src <-chan provider.ReaderValueWithError) <-chan provider.ReaderValueWithError {
+	dst := make(chan provider.ReaderValueWithError)
 	go func() {
 		for {
 			v, ok := <-src
@@ -32,7 +32,7 @@ func NewServiceTranslatorChannel(src <-chan rprovider.ReaderValueWithError) <-ch
 				break
 			}
 			if v.Error != nil {
-				dst <- rprovider.ReaderValueWithError{
+				dst <- provider.ReaderValueWithError{
 					Value: nil,
 					Error: v.Error,
 				}
