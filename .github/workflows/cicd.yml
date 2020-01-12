@@ -2,10 +2,10 @@ name: Build, Test & Release
 
 on: 
   push:
-    tags:
-      - 'v*'
     branches-ignore:
       - '!master'
+    tags:
+      - 'v*'
 jobs:
   build:
     runs-on: ubuntu-latest
