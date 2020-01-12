@@ -8,13 +8,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v1
-        - uses: actions/setup-go@v1
-          with:
-            go-version: 1.13.6
-        - name: Build
-          run: go build ./cmd/docker-compose-watcher
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.6
+      - name: Build
+        run: go build ./cmd/docker-compose-watcher
   test:
     runs-on: ubuntu-latest
     steps:
