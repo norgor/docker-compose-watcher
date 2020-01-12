@@ -45,7 +45,7 @@ func TestReader_Read(t *testing.T) {
 	}{
 		{
 			name:  "reads specified files",
-			files: []string{"/mnt/x/foo.yaml", "/mnt/x/bar.yaml"},
+			files: []string{"/mnt/x/foo.yaml", "/mnt/y/bar.yaml"},
 			fileOpen: stubOpen(openMap{
 				"/mnt/x/foo.yaml": composeToYamlReader(compose{
 					Version: "3.0",
@@ -63,7 +63,7 @@ func TestReader_Read(t *testing.T) {
 						},
 					},
 				}),
-				"/mnt/x/bar.yaml": composeToYamlReader(compose{
+				"/mnt/y/bar.yaml": composeToYamlReader(compose{
 					Version: "2.6",
 					Services: map[string]composeService{
 						"#3": {
@@ -82,27 +82,31 @@ func TestReader_Read(t *testing.T) {
 			}),
 			want: map[string]LabelledService{
 				"#1": LabelledService{
-					Name: "#1",
+					Name:      "#1",
+					Directory: "/mnt/x",
 					Labels: map[string]string{
 						"name.subkey1": "foo1",
 						"name.subkey2": "foo2",
 					},
 				},
 				"#2": LabelledService{
-					Name: "#2",
+					Name:      "#2",
+					Directory: "/mnt/x",
 					Labels: map[string]string{
 						"name.subkey": "bar",
 					},
 				},
 				"#3": LabelledService{
-					Name: "#3",
+					Name:      "#3",
+					Directory: "/mnt/y",
 					Labels: map[string]string{
 						"name.subkey1": "foo1",
 						"name.subkey2": "foo2",
 					},
 				},
 				"#4": LabelledService{
-					Name: "#4",
+					Name:      "#4",
+					Directory: "/mnt/y",
 					Labels: map[string]string{
 						"name.subkey": "bar",
 					},
