@@ -1,23 +1,29 @@
 name: Build, Test & Deploy
 
 on: 
-    push:
-        branches:
-            - master
-            - impl
+  push:
+    branches:
+      - master
+      - impl
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v1
-            - name: Build
-              run: go build ./cmd/docker-compose-watcher
-    test:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v1
-            - name: Test
-              run: go test ./...
+  build:
+    runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v1
+        - uses: actions/setup-go@v1
+          with:
+            go-version: 1.13.6
+        - name: Build
+          run: go build ./cmd/docker-compose-watcher
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.6
+      - name: Test
+        run: go test ./...
     #deploy:
     #    runs-on: ubuntu-latest
     #    needs: [build, test]
