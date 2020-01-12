@@ -164,7 +164,7 @@ func TestCommander_Build(t *testing.T) {
 				NoCache:   true,
 				Pull:      true,
 				Memory:    64,
-				BuildArgs: map[string]string{"a": "b", "c": "d"},
+				BuildArgs: map[string]string{"a": "b"},
 				Parallel:  true,
 			}},
 			wantCmdArgs: []string{
@@ -175,7 +175,6 @@ func TestCommander_Build(t *testing.T) {
 				"--pull",
 				"-m", "64",
 				"--build-arg", `"a"="b"`,
-				"--build-arg", `"c"="d"`,
 				"--parallel",
 			},
 		},
