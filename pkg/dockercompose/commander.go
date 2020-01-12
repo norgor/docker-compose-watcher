@@ -96,7 +96,7 @@ func taggedValueToArgs(tag string, value interface{}, ignoreZero bool) (args []s
 	case reflect.Int:
 		args = append(args, tag, fmt.Sprintf("%#v", vo.Int()))
 	case reflect.String:
-		args = append(args, tag, fmt.Sprintf("%#v", vo.String()))
+		args = append(args, tag, vo.String())
 	case reflect.Slice:
 		for i := 0; i < vo.Len(); i++ {
 			v := vo.Index(i).Interface()
