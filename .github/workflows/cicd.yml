@@ -27,7 +27,7 @@ jobs:
           tar -czf docker-compose-watcher_linux-arm64.tar.gz docker-compose-watcher
       - name: Build Windows x86
         run: |
-          GOOS=linux GOARCH=arm go build ./cmd/docker-compose-watcher
+          GOOS=windows GOARCH=386 go build ./cmd/docker-compose-watcher
           zip -9 docker-compose-watcher_windows-x86 docker-compose-watcher.exe
       - name: blah
         run: ls
