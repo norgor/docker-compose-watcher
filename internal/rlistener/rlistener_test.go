@@ -10,12 +10,29 @@ import (
 	"testing"
 )
 
+type TExtended testing.T
+
+func (t *TExtended) errorIfErr(err error, msg string) {
+	t.Helper()
+	if err != nil {
+		t.Errorf("%s error %v", msg, err)
+	}
+}
+
+func (t *TExtended) fatalIfErr(err error, msg string) {
+	t.Helper()
+	if err != nil {
+		t.Fatalf("%s error %v", msg, err)
+	}
+}
+
 func TestListenerWithWatchers(t *testing.T) {
 	f := map[string]rlistener.WatcherFactoryFunc{
 		"fsnotify": fsnotify.New,
 	}
 	for k, v := range f {
-		t.Run(k, func(tt *testing.T) {
+		t.Run(k, func(tts *testing.T) {
+			tt := (*TExtended)(tts)
 			want := []rlistener.ListenerMsg{
 				{
 					Path:      "./0",
@@ -34,21 +51,12 @@ func TestListenerWithWatchers(t *testing.T) {
 				},
 			}
 			l, err := rlistener.New(v)
-			if err != nil {
-				tt.Errorf("New() error %v", err)
-			}
+			tt.errorIfErr(err, "New()")
+
 			path, err := ioutil.TempDir("", "rlistener_test")
-			if err != nil {
-				tt.Fatalf("failed to create temp dir, error %v", err)
-			}
-			defer func() {
-				if err := os.RemoveAll(path); err != nil {
-					tt.Fatalf("failed to remove temp dir, error %v", err)
-				}
-			}()
-			if err := l.AddDir(path); err != nil {
-				tt.Errorf("Listener.AddDir() error %v", err)
-			}
+			tt.errorIfErr(err, "failed to create temp dir")
+			defer tt.fatalIfErr(os.RemoveAll(path), "failed to remove temp dir")
+			tt.errorIfErr(l.AddDir(path), "Listener.AddDir()")
 
 			var got []rlistener.ListenerMsg
 			n := make(chan struct{})
@@ -69,21 +77,18 @@ func TestListenerWithWatchers(t *testing.T) {
 				done <- struct{}{}
 			}()
 			ap := filepath.Join(path, "/0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16")
-			if err := os.MkdirAll(ap, 0700); err != nil {
-				tt.Fatalf("failed to create test directories, error %v", err)
-			}
+			tt.errorIfErr(os.MkdirAll(ap, 0700), "failed to create test directories")
 			for k := range want {
 				want[k].Path = filepath.Join(path, want[k].Path)
 			}
 			<-n
-			ioutil.WriteFile(filepath.Join(ap, "file"), []byte("foo"), 0700)
-			if err := os.RemoveAll(filepath.Join(path, "/0/1")); err != nil {
-				tt.Errorf("failed to remove subdirs, error %v", err)
-			}
-
-			if err := l.Close(); err != nil {
-				tt.Errorf("Listener.Close() error %v", err)
-			}
+			err = ioutil.WriteFile(filepath.Join(ap, "file"), []byte("foo"), 0700)
+			tt.errorIfErr(err, "failed to write to file")
+			tt.errorIfErr(
+				os.RemoveAll(filepath.Join(path, "/0/1")),
+				"failed to remove subdirs",
+			)
+			tt.errorIfErr(l.Close(), "Listener.Close()")
 			<-done
 			for _, v := range want {
 				for i := 0; ; i++ {
