@@ -1,3 +1,6 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/norgor/docker-compose-watcher)](https://goreportcard.com/report/github.com/norgor/docker-compose-watcher)
+[![Build Status](https://github.com/norgor/docker-compose-watcher/workflows/build%2C%20test%20and%20release/badge.svg)](https://github.com/norgor/docker-compose-watcher/workflows/build%2C%20test%20and%20release/badge.svg)
+
 # About
 docker-compose-watcher is an application that automatically rebuilds and restarts Docker Compose services, based on docker-compose.yaml file(s) and the specified source directories.
 

@@ -81,7 +81,7 @@ func TestReader_Read(t *testing.T) {
 				}),
 			}),
 			want: map[string]LabelledService{
-				"#1": LabelledService{
+				"#1": {
 					Name:      "#1",
 					Directory: "/mnt/x",
 					Labels: map[string]string{
@@ -89,14 +89,14 @@ func TestReader_Read(t *testing.T) {
 						"name.subkey2": "foo2",
 					},
 				},
-				"#2": LabelledService{
+				"#2": {
 					Name:      "#2",
 					Directory: "/mnt/x",
 					Labels: map[string]string{
 						"name.subkey": "bar",
 					},
 				},
-				"#3": LabelledService{
+				"#3": {
 					Name:      "#3",
 					Directory: "/mnt/y",
 					Labels: map[string]string{
@@ -104,7 +104,7 @@ func TestReader_Read(t *testing.T) {
 						"name.subkey2": "foo2",
 					},
 				},
-				"#4": LabelledService{
+				"#4": {
 					Name:      "#4",
 					Directory: "/mnt/y",
 					Labels: map[string]string{
