@@ -54,8 +54,10 @@ func TestListenerWithWatchers(t *testing.T) {
 			tt.errorIfErr(err, "New()")
 
 			path, err := ioutil.TempDir("", "rlistener_test")
-			tt.errorIfErr(err, "failed to create temp dir")
-			defer tt.fatalIfErr(os.RemoveAll(path), "failed to remove temp dir")
+			tt.fatalIfErr(err, "failed to create temp dir")
+			defer func() {
+				tt.fatalIfErr(os.RemoveAll(path), "failed to remove temp dir")
+			}()
 			tt.errorIfErr(l.AddDir(path), "Listener.AddDir()")
 
 			var got []rlistener.ListenerMsg
