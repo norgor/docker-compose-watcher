@@ -6,7 +6,7 @@ import (
 )
 
 // ReaderValueWithError contains services or the error that
-// occured when reading the services.
+// occurred when reading the services.
 type ReaderValueWithError struct {
 	Value ReaderValue
 	Error error
